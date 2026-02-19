@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ethics Argument Builder</title>
+<style>
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #1e2d4a;
+  --navy-light: #2d4169;
+  --white: #ffffff;
+  --gray-100: #f8fafc;
+  --gray-200: #e2e8f0;
+  --gray-400: #94a3b8;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --util:    #3B82F6;
+  --util-bg: #EFF6FF;
+  --deon:    #10B981;
+  --deon-bg: #ECFDF5;
+  --virtue:  #8B5CF6;
+  --virtue-bg:#F5F3FF;
+  --crit:    #F59E0B;
+  --crit-bg: #FFFBEB;
+  --green:   #22C55E;
+  --orange:  #F97316;
+  --red:     #EF4444;
+  --radius:  12px;
+  --shadow:  0 4px 24px rgba(0,0,0,0.09);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--gray-100);
+  color: var(--gray-800);
+  min-height: 100vh;
+}
+
+/* ===== PROGRESS BAR ===== */
+#progress-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 4px; background: var(--gray-200); z-index: 200;
+  display: none;
+}
+#progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--navy), var(--util));
+  transition: width 0.5s ease;
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; min-height: 100vh; padding: 56px 20px 60px; }
+.screen.active { display: flex; flex-direction: column; align-items: center; animation: fadeUp 0.4s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.container { width: 100%; max-width: 740px; }
+
+/* ===== TYPOGRAPHY ===== */
+.stage-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--gray-400); margin-bottom: 6px;
+}
+h1 { font-size: 2.1rem; font-weight: 800; color: var(--navy); line-height: 1.2; margin-bottom: 10px; }
+h2 { font-size: 1.4rem; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
+h3 { font-size: 1.05rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+p  { color: var(--gray-600); line-height: 1.7; margin-bottom: 10px; }
+p:last-child { margin-bottom: 0; }
+
+/* ===== CARDS ===== */
+.card {
+  background: white; border-radius: var(--radius);
+  padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.card-navy {
+  background: var(--navy); border-radius: var(--radius);
+  padding: 20px 24px; margin-bottom: 20px;
+}
+.card-navy p { color: rgba(255,255,255,0.82); font-style: italic; font-size: 1rem; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 22px; border-radius: 8px; border: none;
+  font-size: 0.92rem; font-weight: 600; cursor: pointer;
+  transition: all 0.18s; font-family: inherit;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.btn-primary { background: var(--navy); color: white; }
+.btn-primary:not(:disabled):hover { background: var(--navy-light); transform: translateY(-1px); }
+.btn-outline { background: white; color: var(--navy); border: 2px solid var(--navy); }
+.btn-outline:hover { background: var(--navy); color: white; }
+.btn-ghost { background: rgba(255,255,255,0.15); color: white; }
+.btn-ghost:hover { background: rgba(255,255,255,0.25); }
+.btn-green  { background: var(--green);  color: white; }
+.btn-orange { background: var(--orange); color: white; }
+.btn-red    { background: var(--red);    color: white; }
+.btn-green:not(:disabled):hover  { background: #16a34a; transform: translateY(-1px); }
+.btn-orange:not(:disabled):hover { background: #ea580c; transform: translateY(-1px); }
+.btn-red:not(:disabled):hover    { background: #dc2626; transform: translateY(-1px); }
+
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.btn-row.right { justify-content: flex-end; }
+.btn-row.center { justify-content: center; }
+.btn-row.stretch .btn { flex: 1; }
+
+/* ===== TEXTAREA ===== */
+textarea {
+  width: 100%; padding: 13px 14px; border: 2px solid var(--gray-200);
+  border-radius: 8px; font-size: 0.93rem; font-family: inherit;
+  resize: vertical; color: var(--gray-800); line-height: 1.6;
+  transition: border-color 0.2s;
+}
+textarea:focus { outline: none; border-color: var(--navy); }
+.char-hint { font-size: 0.79rem; color: var(--gray-400); text-align: right; margin-top: 5px; }
+
+/* ===== REF BOX ===== */
+.ref-box {
+  background: var(--gray-100); border-left: 3px solid var(--navy);
+  border-radius: 6px; padding: 12px 15px; font-size: 0.88rem;
+  color: var(--gray-600); font-style: italic; margin-bottom: 16px; line-height: 1.6;
+}
+
+/* ===== TIPS ===== */
+.tips-panel {
+  background: var(--gray-100); border-radius: var(--radius);
+  padding: 18px 20px; border-left: 4px solid var(--navy);
+}
+.tips-panel h4 { color: var(--navy); margin-bottom: 10px; font-size: 0.92rem; }
+.tips-panel ul { list-style: none; }
+.tips-panel li {
+  font-size: 0.84rem; color: var(--gray-600);
+  padding: 5px 0; border-bottom: 1px solid var(--gray-200);
+}
+.tips-panel li:last-child { border: none; }
+.tips-panel li::before { content: "→ "; color: var(--navy); font-weight: 700; }
+
+/* ===== HIDDEN ===== */
+.hidden { display: none !important; }
+
+/* =====================================================
+   SCREEN: WELCOME
+   ===================================================== */
+#screen-welcome {
+  background: linear-gradient(140deg, #1e2d4a 0%, #1a3a6b 100%);
+  justify-content: center;
+}
+#screen-welcome .container { max-width: 580px; text-align: center; }
+#screen-welcome h1 { color: white; font-size: 2.8rem; margin-bottom: 14px; }
+#screen-welcome > .container > p { color: rgba(255,255,255,0.68); font-size: 1.07rem; margin-bottom: 28px; }
+
+.hero-icon { font-size: 3.2rem; margin-bottom: 18px; display: block; }
+
+.stage-pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 32px; }
+.stage-pill {
+  background: rgba(255,255,255,0.13); color: rgba(255,255,255,0.9);
+  padding: 8px 16px; border-radius: 20px; font-size: 0.83rem; font-weight: 500;
+}
+.stage-pill span { opacity: 0.55; margin-right: 5px; }
+
+/* =====================================================
+   SCREEN: DEPARTMENT
+   ===================================================== */
+.dept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; margin-top: 22px; }
+.dept-card {
+  background: white; border-radius: var(--radius); padding: 20px;
+  cursor: pointer; border: 3px solid transparent;
+  box-shadow: var(--shadow); transition: all 0.2s;
+}
+.dept-card:hover { border-color: var(--navy); transform: translateY(-2px); }
+.dept-card.selected { border-color: var(--navy); background: #eef2ff; }
+.dept-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+.dept-card h3 { color: var(--navy); margin-bottom: 6px; font-size: 0.97rem; }
+.dept-card p  { font-size: 0.82rem; margin: 0; color: var(--gray-400); }
+
+/* =====================================================
+   SCREEN: COMPASS
+   ===================================================== */
+.compass-counter {
+  text-align: center; color: var(--gray-400);
+  font-size: 0.87rem; margin-bottom: 18px; font-weight: 500;
+}
+.scenario-card { background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+.scenario-text { font-size: 0.98rem; font-weight: 500; color: var(--gray-800); margin-bottom: 15px; line-height: 1.55; }
+.scenario-num { font-size: 0.78rem; color: var(--gray-400); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+
+.fw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fw-btn {
+  padding: 10px 12px; border-radius: 8px; border: 2px solid transparent;
+  cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.18s;
+  text-align: left; font-family: inherit; line-height: 1.4;
+}
+.fw-btn small { font-weight: 400; opacity: 0.8; display: block; font-size: 0.76rem; }
+.fw-util   { background: var(--util-bg);   color: var(--util);   border-color: #bfdbfe; }
+.fw-deon   { background: var(--deon-bg);   color: #047857;       border-color: #a7f3d0; }
+.fw-virtue { background: var(--virtue-bg); color: #6d28d9;       border-color: #ddd6fe; }
+.fw-crit   { background: var(--crit-bg);   color: #b45309;       border-color: #fde68a; }
+.fw-util.chosen   { border-color: var(--util);   box-shadow: 0 0 0 3px rgba(59,130,246,0.2);  }
+.fw-deon.chosen   { border-color: var(--deon);   box-shadow: 0 0 0 3px rgba(16,185,129,0.2);  }
+.fw-virtue.chosen { border-color: var(--virtue); box-shadow: 0 0 0 3px rgba(139,92,246,0.2);  }
+.fw-crit.chosen   { border-color: var(--crit);   box-shadow: 0 0 0 3px rgba(245,158,11,0.2);  }
+
+.scenario-fb {
+  margin-top: 12px; padding: 10px 14px; border-radius: 7px;
+  font-size: 0.84rem; line-height: 1.55; display: none;
+}
+.fb-match { background: #f0fdf4; border-left: 3px solid var(--green); color: #166534; }
+.fb-close { background: #fffbeb; border-left: 3px solid var(--crit);  color: #92400e; }
+
+/* =====================================================
+   SCREEN: POKER
+   ===================================================== */
+.challenge-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
+.challenge-card {
+  background: var(--navy); color: white; border-radius: var(--radius);
+  padding: 20px; min-height: 150px;
+  animation: flipIn 0.5s ease both;
+}
+.challenge-card:nth-child(2) { animation-delay: 0.25s; }
+@keyframes flipIn {
+  from { opacity: 0; transform: rotateY(70deg) scale(0.95); }
+  to   { opacity: 1; transform: rotateY(0)     scale(1); }
+}
+.challenge-card h4 { font-size: 0.77rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.55; margin-bottom: 10px; }
+.challenge-card p  { font-size: 0.88rem; line-height: 1.6; color: rgba(255,255,255,0.88); margin: 0; }
+
+.decision-row { display: flex; gap: 10px; }
+.decision-row .btn { flex: 1; flex-direction: column; padding: 14px 10px; font-size: 0.85rem; }
+.decision-row .btn small { font-weight: 400; opacity: 0.82; font-size: 0.76rem; margin-top: 3px; }
+
+/* =====================================================
+   SCREEN: GALLERY
+   ===================================================== */
+.gallery-tracker { text-align: center; color: var(--gray-400); font-size: 0.87rem; font-weight: 500; margin-bottom: 16px; }
+.gallery-score-badge {
+  display: inline-block; background: var(--navy); color: white;
+  padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; margin-left: 8px;
+}
+
+.thesis-card { background: white; border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+.thesis-letter {
+  width: 36px; height: 36px; background: var(--navy); color: white;
+  border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1rem; margin-bottom: 14px;
+}
+.thesis-text { font-size: 0.98rem; line-height: 1.82; color: var(--gray-800); font-style: italic; margin-bottom: 20px; }
+
+.rating-row { display: flex; gap: 10px; }
+.rate-btn {
+  flex: 1; padding: 14px 8px; border-radius: 9px; border: 2px solid var(--gray-200);
+  background: white; cursor: pointer; font-weight: 700; font-size: 1.15rem;
+  transition: all 0.18s; font-family: inherit;
+}
+.rate-btn small { display: block; font-weight: 400; font-size: 0.72rem; color: var(--gray-400); margin-top: 3px; }
+.rate-btn:hover { transform: translateY(-2px); }
+.rate-btn[data-r="1"]:hover { border-color: var(--red);   background: #fef2f2; color: var(--red);   }
+.rate-btn[data-r="2"]:hover { border-color: var(--crit);  background: #fffbeb; color: #b45309;      }
+.rate-btn[data-r="3"]:hover { border-color: var(--green); background: #f0fdf4; color: var(--green); }
+.rate-btn.picked-1 { border-color: var(--red);   background: #fef2f2; color: var(--red);   opacity:1 !important; }
+.rate-btn.picked-2 { border-color: var(--crit);  background: #fffbeb; color: #b45309;      opacity:1 !important; }
+.rate-btn.picked-3 { border-color: var(--green); background: #f0fdf4; color: var(--green); opacity:1 !important; }
+
+.gallery-result {
+  margin-top: 16px; padding: 15px 17px; border-radius: 8px;
+  font-size: 0.86rem; line-height: 1.65; display: none; animation: fadeUp 0.3s ease;
+}
+.result-correct   { background: #f0fdf4; border-left: 4px solid var(--green); color: #166534; }
+.result-incorrect { background: #fef2f2; border-left: 4px solid var(--red);   color: #991b1b; }
+
+/* =====================================================
+   SCREEN: WRITE
+   ===================================================== */
+
+/* =====================================================
+   SCREEN: STRESS
+   ===================================================== */
+.stress-q-card { background: white; border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+.q-num    { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-400); margin-bottom: 6px; }
+.q-title  { font-size: 1.35rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+.q-prompt { font-size: 0.88rem; color: var(--gray-600); margin-bottom: 18px; line-height: 1.6; }
+
+.checklist { list-style: none; margin: 4px 0; }
+.checklist li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--gray-200); font-size: 0.88rem; color: var(--gray-700); }
+.checklist li:last-child { border: none; }
+.ci-yes { color: var(--green); font-size: 1.1rem; font-weight: 700; }
+.ci-no  { color: var(--red);   font-size: 1.1rem; font-weight: 700; }
+
+.verdict-box { border-radius: var(--radius); padding: 32px; text-align: center; margin: 20px 0; }
+.v-strong { background: #f0fdf4; border: 3px solid var(--green); }
+.v-work   { background: #fffbeb; border: 3px solid var(--crit);  }
+.v-rethink{ background: #fef2f2; border: 3px solid var(--red);   }
+.v-emoji  { font-size: 2.8rem; display: block; margin-bottom: 12px; }
+.v-title  { font-size: 1.7rem; font-weight: 800; margin-bottom: 6px; }
+.v-sub    { font-size: 0.9rem; color: var(--gray-600); line-height: 1.65; }
+
+/* =====================================================
+   SCREEN: COMPLETE
+   ===================================================== */
+#screen-complete { background: linear-gradient(140deg, #1e2d4a 0%, #1a3a6b 100%); }
+#screen-complete h1 { color: white; }
+#screen-complete > .container > p { color: rgba(255,255,255,0.65); }
+
+/* ===== SCORE DISPLAY ===== */
+.score-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+.score-row:last-of-type { margin-bottom: 0; }
+.score-top { display: flex; justify-content: space-between; align-items: baseline; }
+.score-label { font-size: 0.9rem; font-weight: 600; color: var(--gray-700); }
+.score-num { font-size: 1rem; font-weight: 800; color: var(--navy); }
+.score-num small { font-size: 0.76rem; font-weight: 400; color: var(--gray-400); margin-left: 4px; }
+.score-bar-track { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.score-divider { height: 1px; background: var(--gray-200); margin: 14px 0; }
+.score-overall { display: flex; align-items: center; justify-content: space-between; }
+.score-overall-label { font-size: 0.85rem; color: var(--gray-600); }
+.score-overall-badge {
+  padding: 5px 14px; border-radius: 20px; font-size: 0.84rem; font-weight: 700;
+}
+.badge-strong { background: #f0fdf4; color: #16a34a; }
+.badge-work   { background: #fffbeb; color: #d97706; }
+.badge-rethink{ background: #fef2f2; color: #dc2626; }
+
+.journey { display: flex; flex-direction: column; gap: 0; }
+.journey-step { display: flex; gap: 14px; align-items: flex-start; }
+.journey-dot {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--gray-200);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700; flex-shrink: 0; color: var(--gray-600);
+}
+.journey-dot.final { background: var(--navy); color: white; }
+.journey-connector { border-left: 2px dashed var(--gray-200); height: 14px; margin-left: 14px; }
+.journey-content { padding-bottom: 4px; }
+.journey-label { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-400); margin-bottom: 3px; }
+.journey-text  { font-size: 0.9rem; color: var(--gray-700); font-style: italic; line-height: 1.6; }
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+@media (max-width: 580px) {
+  h1 { font-size: 1.7rem; }
+  #screen-welcome h1 { font-size: 2.1rem; }
+  .challenge-cards { grid-template-columns: 1fr; }
+  .fw-grid { grid-template-columns: 1fr 1fr; }
+  .decision-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- =====================================================
+     PROGRESS BAR
+     ===================================================== -->
+<div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+
+<!-- =====================================================
+     SCREEN 0: WELCOME
+     ===================================================== -->
+<div id="screen-welcome" class="screen active">
+  <div class="container">
+    <span class="hero-icon">⚖️</span>
+    <div class="stage-label" style="color:rgba(255,255,255,0.45)">Ethics · Argument · Writing</div>
+    <h1>Ethics Argument Builder</h1>
+    <p>A step-by-step game that takes you from brainstorming to a strong thesis statement for your research paper.</p>
+    <div class="stage-pills">
+      <div class="stage-pill"><span>1</span>Ethical Compass</div>
+      <div class="stage-pill"><span>2</span>Position Poker</div>
+      <div class="stage-pill"><span>3</span>Thesis Gallery</div>
+      <div class="stage-pill"><span>4</span>Write &amp; Stress Test</div>
+    </div>
+    <div class="btn-row center">
+      <button class="btn" style="background:white;color:var(--navy);font-size:1rem;padding:14px 38px" onclick="goTo('screen-department')">Get Started →</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     SCREEN 1: DEPARTMENT
+     ===================================================== -->
+<div id="screen-department" class="screen">
+  <div class="container">
+    <div class="stage-label">Step 1 of 5 — Choose Your Field</div>
+    <h1>Select Your Department</h1>
+    <p>Your paper will be grounded in your own discipline. Choose the department that best fits your program.</p>
+    <div class="dept-grid" id="dept-grid"></div>
+    <div class="btn-row right" style="margin-top:8px">
+      <button class="btn btn-primary" id="dept-btn" onclick="startCompass()" disabled>Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     SCREEN 2: COMPASS
+     ===================================================== -->
+<div id="screen-compass" class="screen">
+  <div class="container">
+    <div class="stage-label">Stage 1 of 4 — Brainstorming</div>
+    <h1>The Ethical Compass</h1>
+    <p>Below are five real decisions from your field. For each one, choose the ethical framework that best captures what's at stake. There is no single right answer — what matters is your reasoning.</p>
+    <div class="card-navy" id="compass-q"></div>
+    <div class="compass-counter" id="compass-counter">0 of 5 assigned</div>
+    <div id="compass-scenarios"></div>
+    <div class="btn-row right">
+      <button class="btn btn-primary" id="compass-btn" onclick="goToPoker()" disabled>Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     SCREEN 3: POKER
+     ===================================================== -->
+<div id="screen-poker" class="screen">
+  <div class="container">
+    <div class="stage-label">Stage 2 of 4 — Staking a Position</div>
+    <h1>Position Poker</h1>
+    <p>Write your initial position as one sentence. Then face two challenge cards. Decide whether your position survives.</p>
+    <div class="card-navy" id="poker-q"></div>
+
+    <div class="card">
+      <h3>Your Initial Position</h3>
+      <p style="font-size:0.85rem;margin-bottom:12px">Not a thesis yet — a raw stance. What do you think is the most ethically important consideration in your field?</p>
+      <textarea id="initial-pos" rows="3" placeholder="In my field, I believe that..." oninput="onPositionInput()"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="deal-btn" onclick="dealCards()" disabled>Deal Challenge Cards 🃏</button>
+      </div>
+    </div>
+
+    <div id="challenge-section" class="hidden">
+      <h3 style="color:var(--navy);margin-bottom:12px">Your Challenge Cards</h3>
+      <div class="challenge-cards" id="challenge-cards"></div>
+
+      <div class="card">
+        <h3>Your Decision</h3>
+        <p style="font-size:0.85rem;margin-bottom:14px">Can your position withstand these challenges?</p>
+        <div class="decision-row">
+          <button class="btn btn-green" onclick="pokerChoice('hold')">
+            ✓ Hold
+            <small>My position stands</small>
+          </button>
+          <button class="btn btn-orange" onclick="pokerChoice('refine')">
+            ≈ Refine
+            <small>I'll qualify it</small>
+          </button>
+          <button class="btn btn-red" onclick="pokerChoice('fold')">
+            ✗ Fold
+            <small>Changing position</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="refine-section" class="hidden">
+      <div class="card">
+        <h3 id="refine-title">Refined Position</h3>
+        <p id="refine-prompt" style="font-size:0.85rem;margin-bottom:12px"></p>
+        <textarea id="refined-pos" rows="3" placeholder="My revised position is..." oninput="onRefinedInput()"></textarea>
+        <div class="btn-row right">
+          <button class="btn btn-primary" id="refine-btn" onclick="goToGallery()" disabled>Continue →</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="hold-continue" class="hidden btn-row right">
+      <button class="btn btn-primary" onclick="goToGallery()">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     SCREEN 4: GALLERY
+     ===================================================== -->
+<div id="screen-gallery" class="screen">
+  <div class="container">
+    <div class="stage-label">Stage 3 of 4 — Reading the Room</div>
+    <h1>Thesis Gallery</h1>
+    <p>Rate each thesis statement. Is it a <strong>1 (Cop-out)</strong>, <strong>2 (Almost)</strong>, or <strong>3 (Claim)</strong>?</p>
+    <div class="gallery-tracker" id="gallery-tracker">
+      Thesis 1 of 4 &nbsp;<span class="gallery-score-badge" id="gallery-score">0 / 0</span>
+    </div>
+    <div class="thesis-card">
+      <div class="thesis-letter" id="thesis-letter">A</div>
+      <div class="thesis-text" id="thesis-text"></div>
+      <div class="rating-row">
+        <button class="rate-btn" data-r="1" onclick="rateThesis(1)">1<small>Cop-out</small></button>
+        <button class="rate-btn" data-r="2" onclick="rateThesis(2)">2<small>Almost</small></button>
+        <button class="rate-btn" data-r="3" onclick="rateThesis(3)">3<small>Claim</small></button>
+      </div>
+      <div class="gallery-result" id="gallery-result"></div>
+      <div class="btn-row right hidden" id="gallery-next-row">
+        <button class="btn btn-primary" id="gallery-next-btn" onclick="nextThesis()">Next Thesis →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     SCREEN 5: WRITE
+     ===================================================== -->
+<div id="screen-write" class="screen">
+  <div class="container">
+    <div class="stage-label">Stage 4 of 4 — The Draft</div>
+    <h1>Write Your Thesis</h1>
+    <p>Use everything from the Compass and Gallery to write a strong, arguable thesis statement anchored in your field.</p>
+    <div class="ref-box" id="write-ref"></div>
+    <div class="card">
+      <h3>Your Thesis Statement</h3>
+      <textarea id="thesis-input" rows="4" placeholder="Write your thesis here..." oninput="onThesisInput()"></textarea>
+      <div class="char-hint" id="thesis-hint">0 characters</div>
+      <div class="btn-row right">
+        <button class="btn btn-primary" id="write-btn" onclick="goToStress()" disabled>Send to Stress Test →</button>
+      </div>
+    </div>
+    <div class="tips-panel">
+      <h4>Strong Thesis Checklist</h4>
+      <ul>
+        <li>Makes a specific, arguable claim — not just a description</li>
+        <li>Names or clearly implies a framework (utilitarianism, deontology, or virtue ethics)</li>
+        <li>Anchors the argument in your specific field</li>
+        <li>Can be disagreed with by a reasonable, informed person</li>
+        <li>Suggests what the essay will <em>prove</em>, not just <em>discuss</em></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     SCREEN 6: STRESS TEST
+     ===================================================== -->
+<div id="screen-stress" class="screen">
+  <div class="container">
+    <div class="stage-label">Stress Test</div>
+    <h1>Challenge Your Thesis</h1>
+    <p>Answer four questions as honestly as you can. Then see your verdict.</p>
+    <div class="ref-box" id="stress-thesis-ref"></div>
+    <div id="stress-q-container"></div>
+
+    <div id="stress-verdict-section" class="hidden">
+      <div class="card">
+        <h3>Self-Assessment</h3>
+        <p style="font-size:0.85rem;margin-bottom:14px">Based on your four responses:</p>
+        <ul class="checklist" id="stress-checklist"></ul>
+      </div>
+      <div class="verdict-box" id="verdict-box">
+        <span class="v-emoji" id="v-emoji"></span>
+        <div class="v-title" id="v-title"></div>
+        <div class="v-sub" id="v-sub"></div>
+      </div>
+      <div class="card">
+        <h3>Revise Your Thesis <span style="color:var(--gray-400);font-weight:400;font-size:0.87rem">(optional but recommended)</span></h3>
+        <div class="ref-box" id="stress-orig-ref"></div>
+        <textarea id="revised-thesis" rows="4" placeholder="Your revised thesis..."></textarea>
+        <div class="btn-row right" style="margin-top:14px">
+          <button class="btn btn-primary" onclick="goToComplete()">Finish →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     SCREEN 7: COMPLETE
+     ===================================================== -->
+<div id="screen-complete" class="screen">
+  <div class="container" style="max-width:620px">
+    <div style="text-align:center;margin-bottom:28px">
+      <span style="font-size:3rem;display:block;margin-bottom:14px">🎓</span>
+      <h1>You're Done</h1>
+      <p>Here is your full argument journey — from first instinct to finished thesis.</p>
+    </div>
+    <div class="card">
+      <h3>Your Argument Journey</h3>
+      <div class="journey" id="journey"></div>
+    </div>
+    <div class="card">
+      <h3>Your Score</h3>
+      <div id="score-display"></div>
+    </div>
+    <div class="card">
+      <h3>Your Final Thesis</h3>
+      <div class="ref-box" id="final-thesis" style="font-style:normal;color:var(--gray-800);font-size:0.97rem;line-height:1.75"></div>
+      <button class="btn btn-outline" onclick="copyFinal(this)">Copy Thesis</button>
+    </div>
+    <div class="btn-row center" style="margin-top:12px">
+      <button class="btn btn-ghost" onclick="restartGame()">← Start Over</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     JAVASCRIPT
+     ===================================================== -->
+<script>
+
+/* =========================================================
+   DATA
+   ========================================================= */
+
+const FRAMEWORKS = {
+  utilitarianism: { label: 'Utilitarianism', cls: 'fw-util',   emoji: '📊', sub: 'Outcomes, greatest good' },
+  deontology:     { label: 'Deontology',     cls: 'fw-deon',   emoji: '📜', sub: 'Duties, rights, autonomy' },
+  virtue:         { label: 'Virtue Ethics',  cls: 'fw-virtue', emoji: '🌟', sub: 'Character, practical wisdom' },
+
+};
+
+const DEPARTMENTS = {
+
+  'industrial-engineering': {
+    name: 'Industrial Engineering', icon: '⚙️', topic: 'efficiency · automation · safety',
+    question: 'When designing systems for efficiency and productivity, should engineers prioritize maximizing outcomes, following ethical rules, or cultivating professional virtues such as responsibility and integrity?',
+    scenarios: [
+      { text: 'Automating a production line that eliminates 200 jobs but increases output by 30%', best: 'utilitarianism' },
+      { text: 'Following Occupational Safety and Health Administration (OSHA) regulations even when they significantly slow production', best: 'deontology' },
+      { text: 'An engineer refusing to approve a design she knows is unsafe, despite management pressure', best: 'virtue' },
+      { text: 'Calculating whether a costly safety upgrade is worth the statistical lives it would save', best: 'utilitarianism' },
+      { text: 'A worker\'s right to know the full risks of their job, regardless of how it affects hiring', best: 'deontology' }
+    ],
+    challengeCards: [
+      { title: 'The Utilitarian Challenge', text: 'If automation creates enough wealth and new jobs overall, displacing 200 workers is justified by the greater benefit to society. Outcomes matter most — the numbers support it.' },
+      { title: 'The Virtue Ethics Challenge', text: 'The real question is not outcomes or rules — it is what a responsible, professional engineer\'s character looks like when no one is watching and no rule applies.' }
+    ],
+    theses: [
+      { label: 'A', text: 'Industrial engineers face many ethical challenges when designing systems for efficiency and productivity.', rating: 1, explanation: 'Cop-out. This describes a situation without taking any position. It could be the opening line of an essay, not a thesis.' },
+      { label: 'B', text: 'Industrial engineers should not only focus on efficiency but also consider the ethical implications of their decisions.', rating: 2, explanation: 'Almost. It leans somewhere but commits to nothing. Which implications? Why more important than efficiency? "Consider" does no argumentative work.' },
+      { label: 'C', text: 'Because the full consequences of automation cannot be predicted in advance and workers bear the risks of decisions they had no part in making, industrial engineers are ethically obligated to follow duty-based principles that protect worker rights — even when the efficiency numbers argue otherwise.', rating: 3, explanation: 'Strong. It stakes a deontological position, names the specific reason (workers bear unconsented risk), and directly anticipates the utilitarian counterargument.' },
+      { label: 'D', text: 'Virtue ethics offers the most useful guide for industrial engineers because it demands practical wisdom — the ability to recognize when efficiency targets compromise human dignity — a judgment that neither utilitarian calculations nor rigid rules alone can produce.', rating: 3, explanation: 'Also strong. It argues comparatively: virtue ethics does something the other frameworks cannot. "Practical wisdom" and "human dignity" are specific, not decorative.' }
+    ]
+  },
+
+  'molecular-biology': {
+    name: 'Molecular Biology / Genetics', icon: '🧬', topic: 'research ethics · consent · scientific judgment',
+    question: 'Should scientific research be guided primarily by potential benefits to society, by strict ethical duties toward research subjects, or by the character and judgment of the scientist?',
+    scenarios: [
+      { text: 'Using CRISPR to edit embryos that could eliminate a heritable disease affecting thousands', best: 'utilitarianism' },
+      { text: 'Requiring informed consent from all research subjects even when it slows urgent research', best: 'deontology' },
+      { text: 'A scientist choosing not to publish dual-use research that could be weaponized', best: 'virtue' },
+      { text: 'The Tuskegee study — withholding treatment from subjects to observe disease progression', best: 'deontology' },
+      { text: 'A researcher disclosing a conflict of interest even when not legally required to', best: 'virtue' }
+    ],
+    challengeCards: [
+      { title: 'The Utilitarian Challenge', text: 'CRISPR editing, even if ethically risky, is justified if it eliminates suffering for thousands of future people. The aggregate benefit outweighs the risk to a small number of subjects.' },
+      { title: 'The Virtue Ethics Challenge', text: 'Deontological rules cannot cover every novel situation in genetic research. What is needed is a scientist of good character who can judge wisely when no rule yet applies.' }
+    ],
+    theses: [
+      { label: 'A', text: 'Scientific research raises many ethical questions that researchers need to consider carefully.', rating: 1, explanation: 'Cop-out. Every field raises ethical questions. This says nothing specific about genetics or what researchers should actually do.' },
+      { label: 'B', text: 'Scientists have a responsibility to consider the rights of their research subjects, not just the potential benefits of their work.', rating: 2, explanation: 'Almost. It leans toward deontology but never commits to why rights should override benefits, under what conditions, or using what reasoning from the course readings.' },
+      { label: 'C', text: 'The history of cases like the Tuskegee study shows that utilitarian reasoning — however well-intentioned — is insufficient to govern genetic research, because it permits violations of individual autonomy whenever aggregate benefit seems to justify it; only a deontological framework that treats informed consent as non-negotiable can prevent such abuses.', rating: 3, explanation: 'Strong. Anchored in a concrete historical case, identifies the specific failure of utilitarianism (permitting autonomy violations), and makes a clear deontological claim.' },
+      { label: 'D', text: 'While deontological ethics rightly insists on informed consent as an inviolable duty, the rapidly evolving nature of technologies like CRISPR demands something deontology alone cannot provide: the practical wisdom and moral character of the scientist to navigate situations no rulebook has yet anticipated.', rating: 3, explanation: 'Also strong — more nuanced. It concedes deontology before arguing virtue ethics does more work in novel cases. A concession-then-claim structure worth imitating.' }
+    ]
+  },
+
+  'economy': {
+    name: 'Economics', icon: '💹', topic: 'markets · welfare · economic justice',
+    question: 'Should economic policy be guided primarily by maximizing overall welfare and growth, by protecting individual economic rights and fair distribution, or by cultivating virtuous and responsible leadership among economic actors and institutions?',
+    scenarios: [
+      { text: 'Implementing austerity measures that reduce national debt but significantly raise unemployment', best: 'utilitarianism' },
+      { text: 'Enforcing minimum wage laws even when some economic models suggest they reduce total employment', best: 'deontology' },
+      { text: 'A central bank governor choosing long-term price stability over short-term growth despite intense political pressure', best: 'virtue' },
+      { text: 'A trade agreement that raises overall GDP but permanently eliminates an entire regional industry and its workforce', best: 'deontology' },
+      { text: 'A government refusing to bail out a failing bank to avoid moral hazard, despite significant systemic risk', best: 'deontology' }
+    ],
+    challengeCards: [
+      { title: 'The Growth Challenge', text: 'A utilitarian would argue that maximizing GDP and overall welfare — even through painful short-term measures — is justified when it produces the greatest benefit for the greatest number over the long run. Aggregate outcomes matter most.' },
+      { title: 'The Rights Challenge', text: 'Workers and citizens have economic rights to fair wages, stable employment, and basic security that no cost-benefit calculation can override. Economic policy must treat these as inviolable constraints, not negotiable trade-offs.' }
+    ],
+    theses: [
+      { label: 'A', text: 'Economic policy involves many difficult trade-offs and ethical considerations that policymakers must carefully navigate.', rating: 1, explanation: 'Cop-out. Every policy area involves trade-offs. This describes a challenge without taking any position.' },
+      { label: 'B', text: 'Policymakers should not focus only on economic growth but also consider the impact of their decisions on workers and vulnerable communities.', rating: 2, explanation: 'Almost. "Also consider" is not an argument — it is a suggestion. Which impacts? Why do they override growth? Under what conditions and by whose standard?' },
+      { label: 'C', text: 'Although austerity policies are routinely defended on utilitarian grounds — that short-term sacrifice produces long-term collective benefit — this reasoning consistently fails to account for who bears the cost of that sacrifice, making deontological protections for workers\' economic rights a necessary limit on growth-at-all-costs policymaking.', rating: 3, explanation: 'Strong. Concedes the utilitarian logic before dismantling it, identifies the specific flaw (ignoring who pays the cost), and makes a clear deontological claim about necessary limits.' },
+      { label: 'D', text: 'Virtue ethics provides the most useful framework for economic leadership because the practical wisdom to balance growth, equity, and stability in real conditions — navigating crises that no economic model anticipated — is precisely the capacity that neither utilitarian calculations nor rights-based rules alone can supply.', rating: 3, explanation: 'Strong comparative argument. Explains what virtue ethics does that the other frameworks cannot, and grounds the claim in the real unpredictability of economic decision-making.' }
+    ]
+  },
+
+  'political-science': {
+    name: 'Political Science', icon: '🏛️', topic: 'governance · individual rights · civic leadership',
+    question: 'Should governments prioritize the greatest good for the greatest number, the protection of individual rights, or the cultivation of virtuous civic leadership?',
+    scenarios: [
+      { text: 'Mass surveillance justified by measurably reduced crime rates across the population', best: 'utilitarianism' },
+      { text: 'Constitutional protections for minority groups that a voting majority has tried to remove', best: 'deontology' },
+      { text: 'A leader refusing to invoke emergency powers even when it would be politically convenient', best: 'virtue' },
+      { text: 'Security policies that protect most people but systematically profile specific communities', best: 'deontology' },
+      { text: 'A government whistleblower exposing misconduct at significant personal and legal risk', best: 'virtue' }
+    ],
+    challengeCards: [
+      { title: 'The Majoritarian Challenge', text: 'If a policy genuinely benefits 90% of the population, that is the strongest possible justification. Individual inconvenience is the acceptable cost of collective security and social order.' },
+      { title: 'The Rights Challenge', text: 'No majority vote can strip a person of fundamental rights. The entire point of rights is that they are not subject to calculation or popular approval — they are limits on majorities.' }
+    ],
+    theses: [
+      { label: 'A', text: 'Governments have to balance many competing interests when making policy decisions.', rating: 1, explanation: 'Cop-out. This describes what every government does by definition. It argues nothing.' },
+      { label: 'B', text: 'Protecting individual rights is more important than maximizing the overall good in a democratic society.', rating: 2, explanation: 'Almost. A real position, but "more important" without reasoning is a preference, not a thesis. Why? Against what specific utilitarian argument? Under what conditions?' },
+      { label: 'C', text: 'Majoritarian democracy\'s reliance on utilitarian logic — that policies are justified if they benefit the most people — systematically endangers minority rights, demonstrating that deontological protections must function as constitutional limits on what majorities can legislate, regardless of the aggregate benefit they claim.', rating: 3, explanation: 'Strong structural argument. Names the mechanism of harm (majoritarian logic), identifies who it endangers (minorities), and makes a clear constitutional claim.' },
+      { label: 'D', text: 'The post-9/11 debate over security versus civil liberties exposes the limits of both utilitarianism and deontology: utilitarian logic permitted mass surveillance because it promised safety, while deontological objections protected rights in the abstract but offered no governance guidance — suggesting that virtue ethics and the judgment of leaders with civic integrity is the framework that actually does the governing work.', rating: 3, explanation: 'High-level and specific. Uses a concrete historical case to dismantle two frameworks and argue for a third. Shows command of all the readings.' }
+    ]
+  },
+
+  'international-relations': {
+    name: 'International Relations', icon: '🌐', topic: 'global governance · human rights · state responsibility',
+    question: 'Should states and international actors prioritize maximizing national interest and collective security, upholding universal human rights and international obligations, or cultivating virtuous and responsible global leadership?',
+    scenarios: [
+      { text: 'A powerful state intervening militarily in another country to stop an ongoing genocide', best: 'utilitarianism' },
+      { text: 'Upholding international treaty obligations even when doing so limits national sovereignty and economic interest', best: 'deontology' },
+      { text: 'A diplomat refusing to finalize a trade deal that benefits their country at significant cost to a poorer nation', best: 'virtue' },
+      { text: 'Economic sanctions that pressure an authoritarian government but cause widespread civilian suffering', best: 'deontology' },
+      { text: 'A world leader publicly acknowledging their country\'s historical human rights violations without any legal obligation to do so', best: 'virtue' }
+    ],
+    challengeCards: [
+      { title: 'The Realist Challenge', text: 'States have a primary duty to maximize security and welfare for their own citizens. Humanitarian concerns, however genuine, cannot override the national interest when survival and stability are at stake — outcomes for your own people must come first.' },
+      { title: 'The Rights Challenge', text: 'States are bound by international law and universal human rights obligations regardless of national interest. A state that violates rights whenever they become strategically inconvenient undermines the entire framework of international order.' }
+    ],
+    theses: [
+      { label: 'A', text: 'International relations involves many ethical dilemmas that world leaders and diplomats must navigate carefully.', rating: 1, explanation: 'Cop-out. Every field involves ethical dilemmas. This describes a situation without taking any position.' },
+      { label: 'B', text: 'States should not only pursue their national interest but also consider their obligations to other nations and their people.', rating: 2, explanation: 'Almost. "Also consider" is not an argument. Which obligations? When do they override national interest? Under what conditions and at what cost to the state\'s own citizens?' },
+      { label: 'C', text: 'The realist defense of national interest — that states are justified in prioritizing their own security above universal human rights whenever the two conflict — fails as an ethical position because it treats the rights of foreign citizens as negotiable whenever they become strategically inconvenient, violating the deontological principle that human rights apply universally or not at all.', rating: 3, explanation: 'Strong. Attacks a specific named position (realism), identifies the exact ethical failure (conditional rights), and makes a clear deontological claim supported by a principled reason.' },
+      { label: 'D', text: 'The recurring failure of international institutions to prevent genocide and mass atrocity reveals the limits of both utilitarian cost-benefit calculations and treaty-based obligations — suggesting that what global governance actually requires is leaders with the moral character and practical wisdom to act when rules permit inaction and calculations favor looking away.', rating: 3, explanation: 'High-level and specific. Uses a concrete pattern of historical failure to dismantle two frameworks and argue for a third. Shows command of all the course readings.' }
+    ]
+  },
+
+  'law': {
+    name: 'Law', icon: '⚖️', topic: 'justice · rights · judicial judgment',
+    question: 'Should legal systems aim primarily to maximize social welfare, to uphold moral duties and rights, or to promote justice through the character and judgment of judges and lawyers?',
+    scenarios: [
+      { text: 'Mandatory minimum sentences designed to deter crime at the population level', best: 'utilitarianism' },
+      { text: 'A defendant\'s right to a fair trial regardless of cost or administrative burden', best: 'deontology' },
+      { text: 'A judge exercising discretion to avoid a technically legal but deeply unjust outcome', best: 'virtue' },
+      { text: 'A prosecutor pursuing maximum charges primarily to improve conviction statistics', best: 'virtue' },
+      { text: 'A lawyer disclosing information that harms their client to protect an innocent third party', best: 'virtue' }
+    ],
+    challengeCards: [
+      { title: 'The Efficiency Challenge', text: 'Mandatory sentences and standardized rules exist to remove bias and inconsistency. The predictability of law is itself a social good — everyone benefits when the rules are clear and uniform.' },
+      { title: 'The Character Challenge', text: 'Justice in hard cases cannot be achieved by rules alone. It requires a judge of good character who exercises practical wisdom — not a calculator mechanically applying formulas to human situations.' }
+    ],
+    theses: [
+      { label: 'A', text: 'Legal systems involve many ethical considerations that lawyers and judges must navigate.', rating: 1, explanation: 'Cop-out. True of every profession. Takes no position about what legal systems should do or why.' },
+      { label: 'B', text: 'The legal system should protect individual rights rather than simply maximize social welfare.', rating: 2, explanation: 'Almost. A real lean toward deontology, but "simply maximize" sets up a strawman. Specify which rights, against which utilitarian practice, and why.' },
+      { label: 'C', text: 'Utilitarian approaches to criminal sentencing — such as mandatory minimums designed to deter crime at the population level — consistently produce unjust outcomes for individual defendants, demonstrating that a legal system which abandons deontological commitments to individual rights in favor of aggregate deterrence cannot call itself just.', rating: 3, explanation: 'Strong. Anchored in a real legal practice, names exactly where utilitarian logic fails: the individual defendant who pays the price for population-level deterrence.' },
+      { label: 'D', text: 'Legal formalism\'s insistence that judges mechanically apply the law without moral discretion is itself an ethical position — one that virtue ethics exposes as a failure of judicial character, since justice in genuinely hard cases requires exactly the kind of practical wisdom that rigid rule-following excludes.', rating: 3, explanation: 'Conceptually advanced. Argues that formalism is a covert ethical framework, then uses virtue ethics to expose its weakness. A meta-argument about the legal system itself.' }
+    ]
+  }
+
+};
+
+const STRESS_QUESTIONS = [
+  {
+    num: 'Question 1 of 4',
+    title: '"So what?"',
+    prompt: 'Why does this matter specifically in your field — not in general, in your field? What is at stake if your argument turns out to be wrong?',
+    ph: 'This matters in my field because...',
+    checkLabel: 'Answered "So what?" with a field-specific reason'
+  },
+  {
+    num: 'Question 2 of 4',
+    title: '"Who would seriously disagree — and why?"',
+    prompt: 'Name a specific type of professional or group who would reject this thesis. Which ethical framework would they use? Is their counterargument actually strong, or are you arguing against a strawman?',
+    ph: 'Someone who would disagree is... because they would argue...',
+    checkLabel: 'Identified a specific opponent and the framework they would use'
+  },
+  {
+    num: 'Question 3 of 4',
+    title: '"Can you prove this, or just assert it?"',
+    prompt: 'Which course reading would you use to support this argument? What real-world example from your field would you point to?',
+    ph: 'The reading that supports this is... A real example from my field is...',
+    checkLabel: 'Named a course reading and a field-specific example'
+  },
+  {
+    num: 'Question 4 of 4',
+    title: '"Which framework is actually doing the work?"',
+    prompt: 'Which ethical framework is the engine of this argument — not decoration, the actual engine? Complete this sentence: "My thesis stands or falls on [framework] because..."',
+    ph: 'The framework doing the work is... because...',
+    checkLabel: 'Identified the core framework and explained why it drives the argument'
+  }
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const S = {
+  dept: null,
+  compassAssigned: {},
+  initialPos: '',
+  pokerChoice: null,
+  refinedPos: '',
+  thesisIdx: 0,
+  galleryCorrect: 0,
+  galleryTotal: 0,
+  thesis: '',
+  stressStep: 0,
+  stressResponses: [],
+  revisedThesis: ''
+};
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+const PROGRESS = {
+  'screen-welcome':    0,
+  'screen-department': 12,
+  'screen-compass':    26,
+  'screen-poker':      44,
+  'screen-gallery':    60,
+  'screen-write':      76,
+  'screen-stress':     90,
+  'screen-complete':   100
+};
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const pct = PROGRESS[id] || 0;
+  document.getElementById('progress-bar').style.display = pct > 0 ? 'block' : 'none';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   SCREEN: DEPARTMENT
+   ========================================================= */
+function renderDepts() {
+  document.getElementById('dept-grid').innerHTML = Object.entries(DEPARTMENTS).map(([k, d]) => `
+    <div class="dept-card" id="dc-${k}" onclick="pickDept('${k}')">
+      <span class="dept-icon">${d.icon}</span>
+      <h3>${d.name}</h3>
+      <p>${d.topic}</p>
+    </div>
+  `).join('');
+}
+
+function pickDept(k) {
+  document.querySelectorAll('.dept-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('dc-' + k).classList.add('selected');
+  S.dept = k;
+  document.getElementById('dept-btn').disabled = false;
+}
+
+function startCompass() {
+  S.compassAssigned = {};
+  renderCompass();
+  goTo('screen-compass');
+}
+
+/* =========================================================
+   SCREEN: COMPASS
+   ========================================================= */
+function renderCompass() {
+  const d = DEPARTMENTS[S.dept];
+  document.getElementById('compass-q').innerHTML = `<p>${d.question}</p>`;
+  document.getElementById('compass-scenarios').innerHTML = d.scenarios.map((sc, i) => `
+    <div class="scenario-card" id="sc-${i}">
+      <div class="scenario-num">Scenario ${i + 1}</div>
+      <div class="scenario-text">${sc.text}</div>
+      <div class="fw-grid">
+        ${Object.entries(FRAMEWORKS).map(([fk, fv]) => `
+          <button class="fw-btn ${fv.cls}" id="fwb-${i}-${fk}" onclick="assignFw(${i},'${fk}')">
+            ${fv.emoji} ${fv.label}<small>${fv.sub}</small>
+          </button>
+        `).join('')}
+      </div>
+      <div class="scenario-fb" id="fb-${i}"></div>
+    </div>
+  `).join('');
+  updateCompassCounter();
+}
+
+function assignFw(idx, fk) {
+  const d = DEPARTMENTS[S.dept];
+  S.compassAssigned[idx] = fk;
+
+  // update button styles
+  const card = document.getElementById('sc-' + idx);
+  Object.keys(FRAMEWORKS).forEach(k => {
+    const btn = document.getElementById(`fwb-${idx}-${k}`);
+    btn.classList.remove('chosen');
+  });
+  document.getElementById(`fwb-${idx}-${fk}`).classList.add('chosen');
+
+  // feedback
+  const fb = document.getElementById('fb-' + idx);
+  const best = d.scenarios[idx].best;
+  const isMatch = fk === best;
+  fb.style.display = 'block';
+  fb.className = 'scenario-fb ' + (isMatch ? 'fb-match' : 'fb-close');
+  fb.innerHTML = isMatch
+    ? `✓ Good match. This scenario most directly engages <strong>${FRAMEWORKS[best].label}</strong>.`
+    : `💭 Interesting. Most would place this with <strong>${FRAMEWORKS[best].label}</strong> — but frameworks overlap. Your reasoning matters.`;
+
+  updateCompassCounter();
+  document.getElementById('compass-btn').disabled = Object.keys(S.compassAssigned).length < d.scenarios.length;
+}
+
+function updateCompassCounter() {
+  const total = DEPARTMENTS[S.dept].scenarios.length;
+  const done  = Object.keys(S.compassAssigned).length;
+  document.getElementById('compass-counter').textContent = `${done} of ${total} assigned`;
+}
+
+/* =========================================================
+   SCREEN: POKER
+   ========================================================= */
+function goToPoker() {
+  const d = DEPARTMENTS[S.dept];
+  document.getElementById('poker-q').innerHTML = `<p>${d.question}</p>`;
+  document.getElementById('initial-pos').value = '';
+  document.getElementById('deal-btn').disabled = true;
+  document.getElementById('challenge-section').classList.add('hidden');
+  document.getElementById('refine-section').classList.add('hidden');
+  document.getElementById('hold-continue').classList.add('hidden');
+  goTo('screen-poker');
+}
+
+function onPositionInput() {
+  document.getElementById('deal-btn').disabled = document.getElementById('initial-pos').value.trim().length < 10;
+}
+
+function dealCards() {
+  S.initialPos = document.getElementById('initial-pos').value.trim();
+  const d = DEPARTMENTS[S.dept];
+  document.getElementById('challenge-cards').innerHTML = d.challengeCards.map(c => `
+    <div class="challenge-card">
+      <h4>${c.title}</h4>
+      <p>${c.text}</p>
+    </div>
+  `).join('');
+  document.getElementById('challenge-section').classList.remove('hidden');
+  document.getElementById('deal-btn').disabled = true;
+  document.getElementById('deal-btn').textContent = 'Cards dealt ✓';
+}
+
+function pokerChoice(decision) {
+  S.pokerChoice = decision;
+  const refine = document.getElementById('refine-section');
+  const holdCont = document.getElementById('hold-continue');
+
+  if (decision === 'hold') {
+    S.refinedPos = S.initialPos;
+    refine.classList.add('hidden');
+    holdCont.classList.remove('hidden');
+  } else {
+    refine.classList.remove('hidden');
+    holdCont.classList.add('hidden');
+    document.getElementById('refine-title').textContent  = decision === 'refine' ? 'Refined Position' : 'New Position';
+    document.getElementById('refine-prompt').textContent = decision === 'refine'
+      ? 'You held your ground but need to qualify or narrow your claim. What changes?'
+      : 'You folded. Your position needs to change entirely. What do you believe now?';
+    document.getElementById('refined-pos').value = '';
+    document.getElementById('refine-btn').disabled = true;
+  }
+}
+
+function onRefinedInput() {
+  document.getElementById('refine-btn').disabled = document.getElementById('refined-pos').value.trim().length < 10;
+}
+
+/* =========================================================
+   SCREEN: GALLERY
+   ========================================================= */
+function goToGallery() {
+  if (S.pokerChoice === 'refine' || S.pokerChoice === 'fold') {
+    S.refinedPos = document.getElementById('refined-pos').value.trim();
+  }
+  S.thesisIdx = 0;
+  S.galleryCorrect = 0;
+  S.galleryTotal = 0;
+  renderThesis();
+  goTo('screen-gallery');
+}
+
+function renderThesis() {
+  const d = DEPARTMENTS[S.dept];
+  const t = d.theses[S.thesisIdx];
+  document.getElementById('gallery-tracker').innerHTML =
+    `Thesis ${S.thesisIdx + 1} of ${d.theses.length} &nbsp;<span class="gallery-score-badge" id="gallery-score">${S.galleryCorrect} / ${S.galleryTotal}</span>`;
+  document.getElementById('thesis-letter').textContent = t.label;
+  document.getElementById('thesis-text').textContent   = t.text;
+  document.getElementById('gallery-result').style.display = 'none';
+  document.getElementById('gallery-next-row').classList.add('hidden');
+
+  // reset buttons
+  document.querySelectorAll('.rate-btn').forEach(b => {
+    b.style.opacity = '1'; b.style.pointerEvents = 'auto';
+    b.className = 'rate-btn';
+    b.setAttribute('data-r', b.getAttribute('data-r'));
+  });
+
+  const nb = document.getElementById('gallery-next-btn');
+  nb.textContent = S.thesisIdx < d.theses.length - 1 ? 'Next Thesis →' : 'Continue →';
+}
+
+function rateThesis(r) {
+  const d = DEPARTMENTS[S.dept];
+  const t = d.theses[S.thesisIdx];
+  const correct = r === t.rating;
+  S.galleryTotal++;
+  if (correct) S.galleryCorrect++;
+
+  document.querySelectorAll('.rate-btn').forEach(b => {
+    b.style.opacity = '0.45'; b.style.pointerEvents = 'none';
+  });
+  const picked = document.querySelector(`.rate-btn[data-r="${r}"]`);
+  if (picked) { picked.style.opacity = '1'; picked.classList.add('picked-' + r); }
+
+  const labels = { 1: 'Cop-out', 2: 'Almost', 3: 'Claim' };
+  const res = document.getElementById('gallery-result');
+  res.style.display = 'block';
+  res.className = 'gallery-result ' + (correct ? 'result-correct' : 'result-incorrect');
+  res.innerHTML = correct
+    ? `<strong>✓ Correct — this is a ${labels[t.rating]}.</strong><br>${t.explanation}`
+    : `<strong>✗ This is actually a ${labels[t.rating]}.</strong><br>${t.explanation}`;
+
+  document.getElementById('gallery-next-row').classList.remove('hidden');
+}
+
+function nextThesis() {
+  S.thesisIdx++;
+  const d = DEPARTMENTS[S.dept];
+  if (S.thesisIdx < d.theses.length) { renderThesis(); }
+  else { goToWrite(); }
+}
+
+/* =========================================================
+   SCREEN: WRITE
+   ========================================================= */
+function goToWrite() {
+  const pos = S.refinedPos || S.initialPos;
+  document.getElementById('write-ref').textContent = '📌 Your position from Stage 2: "' + pos + '"';
+  document.getElementById('thesis-input').value = '';
+  document.getElementById('thesis-hint').textContent = '0 characters';
+  document.getElementById('write-btn').disabled = true;
+  goTo('screen-write');
+}
+
+function onThesisInput() {
+  const v = document.getElementById('thesis-input').value;
+  document.getElementById('thesis-hint').textContent = v.length + ' characters';
+  document.getElementById('write-btn').disabled = v.trim().length < 20;
+}
+
+/* =========================================================
+   SCREEN: STRESS TEST
+   ========================================================= */
+function goToStress() {
+  S.thesis = document.getElementById('thesis-input').value.trim();
+  S.stressStep = 0;
+  S.stressResponses = [];
+  document.getElementById('stress-thesis-ref').textContent = '📄 Your thesis: "' + S.thesis + '"';
+  document.getElementById('stress-verdict-section').classList.add('hidden');
+  renderStressQ();
+  goTo('screen-stress');
+}
+
+function renderStressQ() {
+  const q = STRESS_QUESTIONS[S.stressStep];
+  const isLast = S.stressStep === STRESS_QUESTIONS.length - 1;
+  document.getElementById('stress-q-container').innerHTML = `
+    <div class="stress-q-card">
+      <div class="q-num">${q.num}</div>
+      <div class="q-title">${q.title}</div>
+      <div class="q-prompt">${q.prompt}</div>
+      <textarea id="stress-ans" rows="4" placeholder="${q.ph}" oninput="onStressInput()"></textarea>
+      <div class="btn-row right" style="margin-top:14px">
+        <button class="btn btn-primary" id="stress-next-btn" onclick="nextStressQ()" disabled>
+          ${isLast ? 'See My Verdict →' : 'Next Question →'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function onStressInput() {
+  document.getElementById('stress-next-btn').disabled =
+    document.getElementById('stress-ans').value.trim().length < 10;
+}
+
+function nextStressQ() {
+  S.stressResponses.push(document.getElementById('stress-ans').value.trim());
+  S.stressStep++;
+  if (S.stressStep < STRESS_QUESTIONS.length) {
+    renderStressQ();
+  } else {
+    showVerdict();
+  }
+}
+
+function showVerdict() {
+  document.getElementById('stress-q-container').innerHTML = '';
+  document.getElementById('stress-verdict-section').classList.remove('hidden');
+
+  let score = 0;
+  const items = STRESS_QUESTIONS.map((q, i) => {
+    const passed = (S.stressResponses[i] || '').length >= 30;
+    if (passed) score++;
+    return { label: q.checkLabel, passed };
+  });
+  S.stressScore = score;
+
+  document.getElementById('stress-checklist').innerHTML = items.map(it => `
+    <li>
+      <span class="${it.passed ? 'ci-yes' : 'ci-no'}">${it.passed ? '✓' : '✗'}</span>
+      ${it.label}
+    </li>
+  `).join('');
+
+  const box   = document.getElementById('verdict-box');
+  const emoji = document.getElementById('v-emoji');
+  const title = document.getElementById('v-title');
+  const sub   = document.getElementById('v-sub');
+
+  if (score === 4) {
+    box.className = 'verdict-box v-strong';
+    emoji.textContent = '💪';
+    title.textContent = 'Strong';
+    title.style.color = '#16a34a';
+    sub.textContent = 'Your thesis survives all four challenges. Revise for clarity and precision — then you\'re ready to write.';
+  } else if (score >= 2) {
+    box.className = 'verdict-box v-work';
+    emoji.textContent = '🔧';
+    title.textContent = 'Needs Work';
+    title.style.color = '#d97706';
+    sub.textContent = 'Your thesis has a foundation but gaps remain. Use the questions you struggled with to guide your revision below.';
+  } else {
+    box.className = 'verdict-box v-rethink';
+    emoji.textContent = '↩️';
+    title.textContent = 'Rethink';
+    title.style.color = '#dc2626';
+    sub.textContent = 'Your position needs more development before it becomes a thesis. Go back to your core framework and rebuild.';
+  }
+
+  document.getElementById('stress-orig-ref').textContent = '📄 Your current thesis: "' + S.thesis + '"';
+  document.getElementById('revised-thesis').value = '';
+
+  setTimeout(() => {
+    document.getElementById('stress-verdict-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 120);
+}
+
+/* =========================================================
+   SCREEN: COMPLETE
+   ========================================================= */
+function goToComplete() {
+  const rev = document.getElementById('revised-thesis').value.trim();
+  S.revisedThesis = rev || S.thesis;
+
+  const steps = [];
+  steps.push({ label: '1', title: 'Initial Position', text: S.initialPos });
+  if (S.refinedPos && S.refinedPos !== S.initialPos) {
+    const action = S.pokerChoice === 'refine' ? 'After Refining' : 'After Folding';
+    steps.push({ label: '2', title: 'Position ' + action, text: S.refinedPos });
+  }
+  steps.push({ label: '3', title: 'Draft Thesis', text: S.thesis });
+  if (S.revisedThesis !== S.thesis) {
+    steps.push({ label: '✓', title: 'Revised Thesis', text: S.revisedThesis, final: true });
+  }
+
+  document.getElementById('journey').innerHTML = steps.map((st, i) => `
+    ${i > 0 ? '<div class="journey-connector"></div>' : ''}
+    <div class="journey-step">
+      <div class="journey-dot ${st.final ? 'final' : ''}">${st.label}</div>
+      <div class="journey-content">
+        <div class="journey-label">${st.title}</div>
+        <div class="journey-text">"${st.text}"</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('final-thesis').textContent = S.revisedThesis;
+
+  // Score card
+  const gPct  = S.galleryTotal > 0 ? Math.round((S.galleryCorrect / S.galleryTotal) * 100) : 0;
+  const sPct  = Math.round(((S.stressScore || 0) / 4) * 100);
+  const total = S.galleryCorrect + (S.stressScore || 0);
+  const max   = S.galleryTotal + 4;
+  let overallCls, overallLabel;
+  if (total >= max - 1)        { overallCls = 'badge-strong';  overallLabel = '🏆 Excellent'; }
+  else if (total >= max - 3)   { overallCls = 'badge-work';    overallLabel = '🔧 Good — Keep Refining'; }
+  else                         { overallCls = 'badge-rethink'; overallLabel = '↩️ Needs More Work'; }
+
+  document.getElementById('score-display').innerHTML = `
+    <div class="score-row">
+      <div class="score-top">
+        <span class="score-label">📚 Thesis Gallery</span>
+        <span class="score-num">${S.galleryCorrect} / ${S.galleryTotal}<small>ratings correct</small></span>
+      </div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" style="width:${gPct}%;background:${gPct >= 75 ? 'var(--green)' : gPct >= 50 ? 'var(--crit)' : 'var(--red)'}"></div>
+      </div>
+    </div>
+    <div class="score-row">
+      <div class="score-top">
+        <span class="score-label">🔍 Stress Test</span>
+        <span class="score-num">${S.stressScore || 0} / 4<small>questions answered fully</small></span>
+      </div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" style="width:${sPct}%;background:${sPct >= 75 ? 'var(--green)' : sPct >= 50 ? 'var(--crit)' : 'var(--red)'}"></div>
+      </div>
+    </div>
+    <div class="score-divider"></div>
+    <div class="score-overall">
+      <span class="score-overall-label">Overall performance</span>
+      <span class="score-overall-badge ${overallCls}">${overallLabel}</span>
+    </div>
+  `;
+
+  goTo('screen-complete');
+}
+
+function copyFinal(btn) {
+  navigator.clipboard.writeText(S.revisedThesis).then(() => {
+    btn.textContent = 'Copied! ✓';
+    setTimeout(() => { btn.textContent = 'Copy Thesis'; }, 2200);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = S.revisedThesis;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = 'Copied! ✓';
+    setTimeout(() => { btn.textContent = 'Copy Thesis'; }, 2200);
+  });
+}
+
+function restartGame() {
+  Object.assign(S, {
+    dept: null, compassAssigned: {}, initialPos: '', pokerChoice: null,
+    refinedPos: '', thesisIdx: 0, galleryCorrect: 0, galleryTotal: 0,
+    thesis: '', stressStep: 0, stressResponses: [], stressScore: 0, revisedThesis: ''
+  });
+  renderDepts();
+  goTo('screen-welcome');
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+renderDepts();
+
+</script>
+</body>
+</html>
